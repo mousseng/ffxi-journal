@@ -47,7 +47,10 @@ local sets = {
         Feet  = 'remove',
     },
     Modulation = {
-        [0] = { },
+        [-10] = { Head="Versa Celata", Feet="Versa Sollerets" },
+        [ -6] = { Head="Versa Celata" },
+        [ -4] = { Feet="Versa Sollerets" },
+        [  0] = { },
     }
 }
 profile.Sets = sets
