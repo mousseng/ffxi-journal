@@ -46,9 +46,13 @@ local sets = {
         Legs  = 'remove',
         Feet  = 'remove',
     },
+    Modulation = {
+        [0] = { },
+    }
 }
 profile.Sets = sets
 
+local intModulation = 0
 local nukes = T{ 'Katon', 'Hyoton', 'Huton', 'Doton', 'Raiton', 'Suiton' }
 
 local function isNuke(spell)
@@ -66,6 +70,11 @@ profile.OnUnload = function()
 end
 
 profile.HandleCommand = function(args)
+    if args[1] == 'mod' then
+        local newMod = tonumber(args[2] or '0')
+        intModulation = newMod
+        print('set INT modulation to ' .. tostring(newMod))
+    end
 end
 
 profile.HandleDefault = function()
@@ -89,6 +98,7 @@ profile.HandleMidcast = function()
     local spell = gData.GetAction()
     if isNuke(spell) then
         gFunc.EquipSet(sets.Naked)
+        gFunc.EquipSet(sets.Modulation[intModulation] or sets.Modulation[0])
     end
 end
 
