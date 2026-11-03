@@ -18,14 +18,12 @@ so everything gets floored, multipliers are not crunched into doubles, and the
 order of operations does matter.
 
 if you would like to run it for yourself:
-
 ```sh
-cd test-harness/
 luajit run.lua
 ```
 
-this will read the array from `test-harness/scenarios.lua` and produce the
-expected damage for each tier.
+this will read the array from `scenarios.lua` and produce the expected damage
+for each tier.
 
 not all the fields are necessary, but are included for posterity anyway; all
 are samples i built from my own character's stats. some notes:
