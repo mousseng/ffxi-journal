@@ -51,7 +51,38 @@ local sets = {
         [ -6] = { Head="Versa Celata" },
         [ -4] = { Feet="Versa Sollerets" },
         [  0] = { },
-    }
+        [ 22] = { Head="Hattori Zukin +2" },
+        [ 40] = { Legs="Hattori Hakama +2" },
+        [ 62] = { Head="Hattori Zukin +2", Legs="Hattori Hakama +2" },
+        [121] = {
+            Head  = "Hattori Zukin +2",
+            Body  = "Hattori Ningi +2",
+            Hands = "Mummu Wrists +2",
+            Legs  = "Hattori Hakama +2",
+            Ring1 = "Metamor. Ring +1",
+            Ring2 = "Shiva Ring",
+        },
+        -- [130] = { -- 27 extra skill
+        --     Main  = "Shigi",
+        --     Head  = "Hachiya Hatsu. +3",
+        --     Body  = "Hattori Ningi +2",
+        --     Hands = "Mummu Wrists +2",
+        --     Legs  = "Hattori Hakama +2",
+        --     -- Feet  = "Mochi. Kyahan +1",
+        --     Ring1 = "Metamor. Ring +1",
+        --     Ring2 = "Shiva Ring",
+        -- },
+        [130] = { -- 46 extra skill
+            Main  = "Shigi",
+            Head  = "Hachiya Hatsu. +3",
+            Body  = "Hattori Ningi +2",
+            Hands = "Mummu Wrists +2",
+            Legs  = "Hattori Hakama +2",
+            Feet  = "Mochi. Kyahan +1",
+            Ring1 = "Metamor. Ring +1",
+            Ring2 = "Shiva Ring",
+        },
+    },
 }
 profile.Sets = sets
 
@@ -74,7 +105,8 @@ end
 
 profile.HandleCommand = function(args)
     if args[1] == 'mod' then
-        local newMod = tonumber(args[2] or '0')
+        local newMod = tonumber(args[2]) or 0
+        newMod = sets.Modulation[newMod] and newMod or 0
         intModulation = newMod
         print('set INT modulation to ' .. tostring(newMod))
     end
