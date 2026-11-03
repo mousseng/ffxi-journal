@@ -74,4 +74,35 @@ return {
             },
         }
     },
+    [  4] = {
+        desc = 'Actual nuking stats',
+        caster = {
+            name     = 'Sivvi',
+            level    = 99,
+            sublevel = 49,
+            mlevel   = 2,
+            stats = {
+                INT = 99 + 172,
+                MAB = 50 + 228,
+                mDMG = 40 + 255,
+                NinjutsuMult = 25,
+            },
+            skills = {
+                Ninjutsu = 490,
+            },
+        },
+        target = {
+            name = 'Fernfeller Chapuli',
+            level = 100,
+            stats = {
+                INT = 96,
+                MDB = 0,
+            },
+        },
+        observations = {
+            ichi = 3409,
+            ni   = 5084,
+            san  = 6754,
+        }
+    },
 }

@@ -1,7 +1,7 @@
 local doNinjutsu = require 'ninjutsu'
 local scenarios = require 'scenarios'
 
-for _, scenario in pairs(scenarios) do
+for _, scenario in ipairs(scenarios) do
     print(scenario.desc)
 
     local ichi = doNinjutsu(scenario.caster, scenario.target, 'Katon: Ichi')

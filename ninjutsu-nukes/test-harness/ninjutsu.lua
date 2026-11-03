@@ -4,7 +4,7 @@
 -- instead model each spell as a variable list of pieces. starting from the
 -- base we either accumulate piecewise results upward or downward.
 --]]
-local pieceFuncs = {
+local intervals = {
     ['Ichi'] = {
         base = 16,
         sMin = 50,
@@ -47,24 +47,24 @@ local pieceFuncs = {
 -- of being based on the LSB magic code.
 --]]
 local spells = {
-    ['Doton: Ichi']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
-    ['Doton: Ni']    = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
-    ['Doton: San']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
-    ['Huton: Ichi']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
-    ['Huton: Ni']    = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
-    ['Huton: San']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
-    ['Hyoton: Ichi'] = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
-    ['Hyoton: Ni']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
-    ['Hyoton: San']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
-    ['Katon: Ichi']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
-    ['Katon: Ni']    = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
-    ['Katon: San']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
-    ['Raiton: Ichi'] = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
-    ['Raiton: Ni']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
-    ['Raiton: San']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
-    ['Suiton: Ichi'] = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
-    ['Suiton: Ni']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
-    ['Suiton: San']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
+    ['Doton: Ichi']  = { mod  = 'INT', mAcc = 0, params = intervals.Ichi },
+    ['Doton: Ni']    = { mod  = 'INT', mAcc = 0, params = intervals.Ni   },
+    ['Doton: San']   = { mod  = 'INT', mAcc = 0, params = intervals.San  },
+    ['Huton: Ichi']  = { mod  = 'INT', mAcc = 0, params = intervals.Ichi },
+    ['Huton: Ni']    = { mod  = 'INT', mAcc = 0, params = intervals.Ni   },
+    ['Huton: San']   = { mod  = 'INT', mAcc = 0, params = intervals.San  },
+    ['Hyoton: Ichi'] = { mod  = 'INT', mAcc = 0, params = intervals.Ichi },
+    ['Hyoton: Ni']   = { mod  = 'INT', mAcc = 0, params = intervals.Ni   },
+    ['Hyoton: San']  = { mod  = 'INT', mAcc = 0, params = intervals.San  },
+    ['Katon: Ichi']  = { mod  = 'INT', mAcc = 0, params = intervals.Ichi },
+    ['Katon: Ni']    = { mod  = 'INT', mAcc = 0, params = intervals.Ni   },
+    ['Katon: San']   = { mod  = 'INT', mAcc = 0, params = intervals.San  },
+    ['Raiton: Ichi'] = { mod  = 'INT', mAcc = 0, params = intervals.Ichi },
+    ['Raiton: Ni']   = { mod  = 'INT', mAcc = 0, params = intervals.Ni   },
+    ['Raiton: San']  = { mod  = 'INT', mAcc = 0, params = intervals.San  },
+    ['Suiton: Ichi'] = { mod  = 'INT', mAcc = 0, params = intervals.Ichi },
+    ['Suiton: Ni']   = { mod  = 'INT', mAcc = 0, params = intervals.Ni   },
+    ['Suiton: San']  = { mod  = 'INT', mAcc = 0, params = intervals.San  },
 }
 
 local function clamp(val, min, max)
@@ -108,6 +108,12 @@ local function calculateSkillMult(caster, params)
     return baseline + bonus, baseline
 end
 
+local function calculateNinMult(caster)
+    local baseline = 100
+    local bonus = caster.stats.NinjutsuMult or 0
+    return baseline + bonus, baseline
+end
+
 local function calculateMabMult(caster, target)
     local mab = 100 + caster.stats.MAB
     local mdb = 100 + target.stats.MDB
@@ -121,12 +127,14 @@ local function useNinjutsuSpell(caster, target, spell)
     local baseDmg             = calculateBaseDmg(caster, spellTable.params, dStat)
     local skillMult, skillDiv = calculateSkillMult(caster, spellTable.params)
     local mabMult, mabDiv     = calculateMabMult(caster, target)
+    local ninMult, ninDiv     = calculateNinMult(caster)
 
     -- work through the multiplications step-by-step to reproduce what is
     -- probably a series of integer math in C++. anything called "mult" should
     -- be a whole int (not a float) and we handle its divisor within the floor.
     local mutDmg = baseDmg
     mutDmg = math.floor(mutDmg * skillMult / skillDiv)
+    mutDmg = math.floor(mutDmg * ninMult / ninDiv)
     mutDmg = math.floor(mutDmg * mabMult / mabDiv)
     return mutDmg
 end
