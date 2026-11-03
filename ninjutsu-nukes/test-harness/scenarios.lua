@@ -138,4 +138,36 @@ return {
             san  = 7012,
         }
     },
+    [  6] = {
+        desc = 'Futae nuking vs Chapuli',
+        caster = {
+            name     = 'Sivvi',
+            level    = 99,
+            sublevel = 49,
+            mlevel   = 2,
+            stats = {
+                INT = 99 + 172,
+                MAB = 50 + 228,
+                mDMG = 40 + 255 + 100,
+                NinjutsuMult = 25,
+                Futae = 50,
+            },
+            skills = {
+                Ninjutsu = 490,
+            },
+        },
+        target = {
+            name = 'Fernfeller Chapuli',
+            level = 100,
+            stats = {
+                INT = 96,
+                MDB = 0,
+            },
+        },
+        observations = {
+            ichi = 7378,
+            ni   = 10264,
+            san  = 12951,
+        }
+    },
 }

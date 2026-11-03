@@ -46,6 +46,13 @@ local sets = {
         Legs  = 'remove',
         Feet  = 'remove',
     },
+    Futae = {
+        -- Main = "Heishi Shorinken", -- mDMG+186
+        -- Sub  = "Ternion Dagger +1",
+
+        Main = "Ternion Dagger +1",
+        Neck = "Sanctity Necklace", -- MAB+10
+    },
     Modulation = {
         [-10] = { Head="Versa Celata", Feet="Versa Sollerets" },
         [ -6] = { Head="Versa Celata" },
@@ -86,6 +93,7 @@ local sets = {
 }
 profile.Sets = sets
 
+local futae = false
 local intModulation = 0
 local nukes = T{ 'Katon', 'Hyoton', 'Huton', 'Doton', 'Raiton', 'Suiton' }
 
@@ -109,6 +117,9 @@ profile.HandleCommand = function(args)
         newMod = sets.Modulation[newMod] and newMod or 0
         intModulation = newMod
         print('set INT modulation to ' .. tostring(newMod))
+    elseif args[1] == 'futae' then
+        futae = not futae
+        print('futae is now ' .. tostring(futae))
     end
 end
 
@@ -134,6 +145,7 @@ profile.HandleMidcast = function()
     if isNuke(spell) then
         gFunc.EquipSet(sets.Naked)
         gFunc.EquipSet(sets.Modulation[intModulation] or sets.Modulation[0])
+        if futae then gFunc.EquipSet(sets.Futae) end
     end
 end
 
