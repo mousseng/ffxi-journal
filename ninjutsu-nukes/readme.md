@@ -1,36 +1,41 @@
 ninjutsu nukes
-======================================================================
+================================================================================
 
-test setup
-----------------------------------------------------------------------
-- NIN99/WAR49, ML2
-- no gear equipped on cast
-- Merits:
-  - 1 Raiton Effect
-  - 5 Ninjutsu Mag. Atk. Bonus
-- Job Points:
-  - 2100 total spent
-  - 20 Elemental Ninjutsu Effect
+[izanami's post from 2022](https://www.ffxiah.com/forum/topic/56749) is
+basically correct. elemental ninjutsu damage is accurately modeled with
+a piece-wise function over dINT.
 
-this comes to a total of:
-- 40 mDMG (20 from jp)
-- 50 MAB (2 from merit g1, 20 from merit g2, 28 from jp gifts)
-- 99 base INT
-- 471 Ninjutsu skill
+at the present time i have not thought deeply about how to explain or show
+it any better, so for now you will have to settle for code.
 
-nuke results
-----------------------------------------------------------------------
-see `ouphe.csv` - i got tired of manually collecting stats, so i wrote
-a little addon to automatically do it for certain mobs.
+the test harness
+--------------------------------------------------------------------------------
 
-the formula?
-----------------------------------------------------------------------
-Izanami on ffxiah is, essentially, correct. not exactly (because FFXI
-does most, if not all, math with integers only) but certainly close
-enough for government work.
+i've provided a lightly-annotated implementation in lua. it differs from the
+ffxiah post because i sought to find a more natural representation that still
+gets everything exactly right - i suspect SE's actual code is pure integer math
+so everything gets floored, multipliers are not crunched into doubles, and the
+order of operations does matter.
 
-the `test-harness/` directory has a lua script that should be able to
-predict exactly the damage values of any nuke against any known stat
-block. it's probably not doing what the Square Enix code is doing, but
-it should more accurately emulate the behavior of their integer math
-down to the order multipliers are applied.
+if you would like to run it for yourself:
+
+```sh
+cd test-harness/
+luajit run.lua
+```
+
+this will read the array from `test-harness/scenarios.lua` and produce the
+expected damage for each tier.
+
+not all the fields are necessary, but are included for posterity anyway; all
+are samples i built from my own character's stats. some notes:
+- day and weather are treated as properties of the caster
+  - `day = 'positive' | 'negative'`
+  - `weather = { 'positive' | 'negative', ['single' | 'double'] }`
+- the `NinjutsuMult` stat is the bonus provided by Relic Feet
+- if you want to nuke with Futae, you need to set the `Futae` caster stat
+  - this should be a base of 50
+  - pieces like Empyrean Gloves add directly to the base, eg 50 + 26
+  - there is a JP Bonus that grants 5 mDMG per level (max 100) as well
+- a lot of gear has weird effects, but they mostly boil down to just INT, MAB,
+  mDMG, and skill.

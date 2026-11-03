@@ -1,24 +1,36 @@
 --[[
--- LSB models its magic damage formula based on black magic only; it too uses
--- piece-wise curves but Ninjutsu does not fit into the same brackets, so we
--- instead model each spell as a variable list of pieces. starting from the
--- base we either accumulate piecewise results upward or downward.
+-- each tier of elemental Ninjutsu is a piecewise function with a handful of
+-- intervals. izanami on ffxiah formulated this as an independent M and V for
+-- each interval; here we will implement each interval as just a slope M with a
+-- single shared V.
+--
+-- instead of determining which function to evaluate based on dINT, we will
+-- evaluate each interval up to their bounds and sum the results. this produces
+-- a slightly more accurate final number.
+--
+-- this design came about because otherwise the calculation of baseDMG required
+-- a different implementation for some intervals (some would floor, some ceil).
 --]]
 local intervals = {
     ['Ichi'] = {
-        base = 16,
-        sMin = 50,
-        sMax = 250,
+        base =  16, -- this is our shared V
+        sMin =  50, -- the minimum value of skill used for the Ninjutsu bonus
+        sMax = 250, -- the maximum value of skill used for the Ninjutsu bonus
         pos = {
+            -- these are our ascending intervals, to be used for positive dINT.
+            -- s is not exactly the slope, but rather a count of how many 1/2
+            -- dINTs should be added or subtracted to achieve the appropriate
+            -- M value.
             { lo =   0, hi =  24, s =  0 },
             { lo =  24, hi =  76, s = -1 },
         },
         neg = {
+            -- the descending intervals for negative dINT.
             { lo =   0, hi =  10, s = -1 },
         },
     },
     ['Ni'] = {
-        base = 69,
+        base =  69,
         sMin = 125,
         sMax = 349,
         pos = {
@@ -73,26 +85,27 @@ local function clamp(val, min, max)
     return val
 end
 
---- because each Ninjutsu spell seems to have slopes divisible by 0.5 we simply
---- track a value `s` (or `slopeMod` here) that we multiply by half the xStat.
---- eg, to get an `m` of 1.5, we set `s` to +1; to get an `m` of 0.5, we set
---- `s` to -1.
+--- find the dSTAT contribution of a particular interval.
 local function calculatePiece(xStat, slopeMod)
     return xStat + slopeMod * math.floor(xStat / 2)
 end
 
 --- starting from dINT=0, we work outwards (either positively or negatively)
---- one piece of the curve at a time.
+--- one interval at a time.
 local function calculateBaseDmg(caster, params, dStat)
     local accum = 0
-    local xStat = math.abs(dStat)
     local asc = dStat >= 0
 
+    -- xSTAT is intended to represent how "far" into the whole curve we reach
+    local xStat = math.abs(dStat)
+
+    -- walk through each interval and accumulate their portions
     for _, piece in ipairs(asc and params.pos or params.neg) do
         if xStat > piece.lo then
-            local slopeMod = piece.s
+            -- this interval is needed, so nxSTAT is how much dSTAT this
+            -- particular step will account for
             local nxStat = math.min(xStat, piece.hi) - piece.lo
-            accum = accum + calculatePiece(nxStat, slopeMod)
+            accum = accum + calculatePiece(nxStat, piece.s)
         end
     end
 
@@ -166,8 +179,7 @@ local function useNinjutsuSpell(caster, target, spell)
 
     -- work through the multiplications step-by-step to reproduce what is
     -- probably a series of integer math in C++. anything called "mult" should
-    -- be a whole int (not a float) and we handle its divisor within the floor,
-    -- after multiplying the base.
+    -- be a whole int (not a float) and come with a paired divisor.
     local mutDmg = baseDmg
     mutDmg = math.floor(mutDmg * skillMult / skillDiv)
     mutDmg = math.floor(mutDmg * dayMult / dayDiv)
