@@ -146,11 +146,11 @@ return {
             sublevel = 49,
             mlevel   = 2,
             stats = {
-                INT = 99 + 172,
-                MAB = 50 + 228,
+                INT = 99 + 166,
+                MAB = 50 + 214,
                 mDMG = 40 + 255 + 100,
                 NinjutsuMult = 25,
-                Futae = 50,
+                Futae = 76,
             },
             skills = {
                 Ninjutsu = 490,

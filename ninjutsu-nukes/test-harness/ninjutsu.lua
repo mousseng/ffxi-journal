@@ -171,9 +171,9 @@ local function useNinjutsuSpell(caster, target, spell)
     local mutDmg = baseDmg
     mutDmg = math.floor(mutDmg * skillMult / skillDiv)
     mutDmg = math.floor(mutDmg * dayMult / dayDiv)
+    mutDmg = math.floor(mutDmg * futMult / futDiv)
     mutDmg = math.floor(mutDmg * ninMult / ninDiv)
     mutDmg = math.floor(mutDmg * mabMult / mabDiv)
-    mutDmg = math.floor(mutDmg * futMult / futDiv)
     return mutDmg
 end
 
