@@ -22,21 +22,25 @@ end
 -- LSB models its magic damage formula based on black magic only; it too uses
 -- piece-wise curves but Ninjutsu does not fit into the same brackets, so we
 -- instead model each spell as a variable list of pieces.
+--
+-- the dMin/dMax values are untested beyond Ichi. Izanami found caps that line
+-- up with my own collected data so far; it's unclear if the caps are actual
+-- values, or just emergent properties of a more natural formula.
 --]]
 local formulae = {
     ['Ichi'] = SpellParams {
-        { i = inf, v =  28, m = 0.5, sMin =  50, sMax = 250 },
-        { i =  24, v =  16, m = 1.0, sMin =  50, sMax = 250 },
-        { i =  -1, v =  16, m = 0.5, sMin =  50, sMax = 250 },
+        { i = inf, v =  28, m = 0.5, dMin =   11, dMax =  66, sMin =  50, sMax = 250 },
+        { i =  24, v =  16, m = 1.0, dMin =   11, dMax =  66, sMin =  50, sMax = 250 },
+        { i =  -1, v =  16, m = 0.5, dMin =   11, dMax =  66, sMin =  50, sMax = 250 },
     },
     ['Ni'] = SpellParams {
-        { i = inf, v = 125, m = 0.5, sMin = 125, sMax = 349 },
-        { i = 112, v =  69, m = 1.0, sMin = 125, sMax = 349 },
-        { i =  -1, v =  69, m = 0.5, sMin = 125, sMax = 349 },
+        { i = inf, v = 125, m = 0.5, dMin = -inf, dMax = inf, sMin = 125, sMax = 349 },
+        { i = 112, v =  69, m = 1.0, dMin = -inf, dMax = inf, sMin = 125, sMax = 349 },
+        { i =  -1, v =  69, m = 0.5, dMin = -inf, dMax = inf, sMin = 125, sMax = 349 },
     },
     ['San'] = SpellParams {
-        { i = inf, v =  69, m = 1.5, sMin = 275, sMax = 499 },
-        { i =  -1, v = 134, m = 1.0, sMin = 275, sMax = 499 },
+        { i = inf, v = 134, m = 1.5, dMin = -inf, dMax = inf, sMin = 275, sMax = 499 },
+        { i =  -1, v = 134, m = 1.0, dMin = -inf, dMax = inf, sMin = 275, sMax = 499 },
     },
 }
 
@@ -71,32 +75,40 @@ local function clamp(val, min, max)
     return val
 end
 
+local function calculateBaseDmg(caster, params, dStat)
+    local baseDmg = params.v + math.floor(dStat * params.m)
+    return caster.stats.mDMG + clamp(baseDmg, params.dMin, params.dMax)
+end
+
 local function calculateSkillMult(caster, params)
     local baseline = 100
     local effSkill = clamp(caster.skills.Ninjutsu, params.sMin, params.sMax)
     local fSkill = effSkill - params.sMin
     local bonus = math.floor(fSkill / 2)
-    return (baseline + bonus) / 100
+    return baseline + bonus, baseline
 end
 
 local function calculateMabMult(caster, target)
     local mab = 100 + caster.stats.MAB
     local mdb = 100 + target.stats.MDB
-    return mab / mdb
+    return mab, mdb
 end
 
 local function useNinjutsuSpell(caster, target, spell)
-    local spellTable = spells[spell]
-    local dStat = caster.stats[spellTable.mod] - target.stats[spellTable.mod]
-    local params = spells[spell].params:lookup(dStat)
+    local spellTable          = spells[spell]
+    local dStat               = caster.stats[spellTable.mod] - target.stats[spellTable.mod]
+    local params              = spells[spell].params:lookup(dStat)
 
-    local baseDmg   = caster.stats.mDMG + params.v + math.floor(dStat * params.m)
-    local skillMult = calculateSkillMult(caster, params)
-    local mabMult   = calculateMabMult(caster, target)
+    local baseDmg             = calculateBaseDmg(caster, params, dStat)
+    local skillMult, skillDiv = calculateSkillMult(caster, params)
+    local mabMult, mabDiv     = calculateMabMult(caster, target)
 
+    -- work through the multiplications step-by-step to reproduce what is
+    -- probably a series of integer math in C++. anything called "mult" should
+    -- be a whole int (not a float) and we handle its divisor within the floor.
     local mutDmg = baseDmg
-    mutDmg = math.floor(mutDmg * skillMult)
-    mutDmg = math.floor(mutDmg * mabMult)
+    mutDmg = math.floor(mutDmg * skillMult / skillDiv)
+    mutDmg = math.floor(mutDmg * mabMult / mabDiv)
     return mutDmg
 end
 
