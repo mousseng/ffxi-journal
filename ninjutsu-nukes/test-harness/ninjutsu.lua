@@ -114,6 +114,33 @@ local function calculateNinMult(caster)
     return baseline + bonus, baseline
 end
 
+local function calculateDayMult(caster)
+    local baseline = 100
+    local bonus = 0
+
+    if caster.day == 'positive' then
+        bonus = bonus + 10
+    elseif caster.day == 'negative' then
+        bonus = bonus - 10
+    end
+
+    if caster.weather and caster.weather[1] == 'positive' then
+        bonus = bonus + 10
+
+        if caster.weather[2] == 'double' then
+            bonus = bonus + 15
+        end
+    elseif caster.weather and caster.weather[1] == 'negative' then
+        bonus = bonus - 10
+
+        if caster.weather[2] == 'double' then
+            bonus = bonus - 15
+        end
+    end
+
+    return baseline + bonus, baseline
+end
+
 local function calculateMabMult(caster, target)
     local mab = 100 + caster.stats.MAB
     local mdb = 100 + target.stats.MDB
@@ -128,12 +155,14 @@ local function useNinjutsuSpell(caster, target, spell)
     local skillMult, skillDiv = calculateSkillMult(caster, spellTable.params)
     local mabMult, mabDiv     = calculateMabMult(caster, target)
     local ninMult, ninDiv     = calculateNinMult(caster)
+    local dayMult, dayDiv     = calculateDayMult(caster)
 
     -- work through the multiplications step-by-step to reproduce what is
     -- probably a series of integer math in C++. anything called "mult" should
     -- be a whole int (not a float) and we handle its divisor within the floor.
     local mutDmg = baseDmg
     mutDmg = math.floor(mutDmg * skillMult / skillDiv)
+    mutDmg = math.floor(mutDmg * dayMult / dayDiv)
     mutDmg = math.floor(mutDmg * ninMult / ninDiv)
     mutDmg = math.floor(mutDmg * mabMult / mabDiv)
     return mutDmg

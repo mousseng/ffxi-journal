@@ -75,7 +75,7 @@ return {
         }
     },
     [  4] = {
-        desc = 'Actual nuking stats',
+        desc = 'Actual nuking stats vs Chapuli',
         caster = {
             name     = 'Sivvi',
             level    = 99,
@@ -103,6 +103,39 @@ return {
             ichi = 3409,
             ni   = 5084,
             san  = 6754,
+        }
+    },
+    [  5] = {
+        desc = 'Real daynuking vs Chapuli',
+        caster = {
+            name     = 'Sivvi',
+            level    = 99,
+            sublevel = 49,
+            mlevel   = 2,
+            day      = 'positive',
+            stats = {
+                -- base stats + nuking stats - skrymir being swapped for obi
+                INT = 99 + 172,
+                MAB = 50 + 228 - 5,
+                mDMG = 40 + 255 - 30,
+                NinjutsuMult = 25,
+            },
+            skills = {
+                Ninjutsu = 490,
+            },
+        },
+        target = {
+            name = 'Fernfeller Chapuli',
+            level = 100,
+            stats = {
+                INT = 96,
+                MDB = 0,
+            },
+        },
+        observations = {
+            ichi = 3394,
+            ni   = 5192,
+            san  = 7012,
         }
     },
 }
