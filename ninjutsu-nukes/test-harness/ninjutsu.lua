@@ -1,46 +1,44 @@
-local inf = math.huge
-
---[[
--- SpellParams are the various function pieces that make the overall damage
--- curve for a spell. They are stratified by dStat, and we must order them
--- highest to lowest in order for this particular lookup method to work.
---]]
-local SpellParams = function(tbl)
-    function tbl:lookup(i)
-        local p = nil
-        for _, v in ipairs(self) do
-            if i <= v.i then
-                p = v
-            end
-        end
-        return p
-    end
-    return tbl
-end
-
 --[[
 -- LSB models its magic damage formula based on black magic only; it too uses
 -- piece-wise curves but Ninjutsu does not fit into the same brackets, so we
--- instead model each spell as a variable list of pieces.
---
--- the dMin/dMax values are untested beyond Ichi. Izanami found caps that line
--- up with my own collected data so far; it's unclear if the caps are actual
--- values, or just emergent properties of a more natural formula.
+-- instead model each spell as a variable list of pieces. starting from the
+-- base we either accumulate piecewise results upward or downward.
 --]]
-local formulae = {
-    ['Ichi'] = SpellParams {
-        { i = inf, v =  28, m = 0.5, dMin =   11, dMax =  66, sMin =  50, sMax = 250 },
-        { i =  24, v =  16, m = 1.0, dMin =   11, dMax =  66, sMin =  50, sMax = 250 },
-        { i =  -1, v =  16, m = 0.5, dMin =   11, dMax =  66, sMin =  50, sMax = 250 },
+local pieceFuncs = {
+    ['Ichi'] = {
+        base = 16,
+        sMin = 50,
+        sMax = 250,
+        pos = {
+            { lo =   0, hi =  24, s =  0 },
+            { lo =  24, hi =  76, s = -1 },
+        },
+        neg = {
+            { lo =   0, hi =  10, s = -1 },
+        },
     },
-    ['Ni'] = SpellParams {
-        { i = inf, v = 125, m = 0.5, dMin = -inf, dMax = inf, sMin = 125, sMax = 349 },
-        { i = 112, v =  69, m = 1.0, dMin = -inf, dMax = inf, sMin = 125, sMax = 349 },
-        { i =  -1, v =  69, m = 0.5, dMin = -inf, dMax = inf, sMin = 125, sMax = 349 },
+    ['Ni'] = {
+        base = 69,
+        sMin = 125,
+        sMax = 349,
+        pos = {
+            { lo =   0, hi = 112, s =  0 },
+            { lo = 112, hi = 338, s = -1 },
+        },
+        neg = {
+            { lo =   0, hi =  44, s = -1 },
+        },
     },
-    ['San'] = SpellParams {
-        { i = inf, v = 134, m = 1.5, dMin = -inf, dMax = inf, sMin = 275, sMax = 499 },
-        { i =  -1, v = 134, m = 1.0, dMin = -inf, dMax = inf, sMin = 275, sMax = 499 },
+    ['San'] = {
+        base = 134,
+        sMin = 275,
+        sMax = 499,
+        pos = {
+            { lo =   0, hi = 353, s =  1 },
+        },
+        neg = {
+            { lo =   0, hi =  54, s =  0 },
+        },
     },
 }
 
@@ -49,24 +47,24 @@ local formulae = {
 -- of being based on the LSB magic code.
 --]]
 local spells = {
-    ['Doton: Ichi']  = { mod  = 'INT', mAcc = 0, params = formulae.Ichi },
-    ['Doton: Ni']    = { mod  = 'INT', mAcc = 0, params = formulae.Ni   },
-    ['Doton: San']   = { mod  = 'INT', mAcc = 0, params = formulae.San  },
-    ['Huton: Ichi']  = { mod  = 'INT', mAcc = 0, params = formulae.Ichi },
-    ['Huton: Ni']    = { mod  = 'INT', mAcc = 0, params = formulae.Ni   },
-    ['Huton: San']   = { mod  = 'INT', mAcc = 0, params = formulae.San  },
-    ['Hyoton: Ichi'] = { mod  = 'INT', mAcc = 0, params = formulae.Ichi },
-    ['Hyoton: Ni']   = { mod  = 'INT', mAcc = 0, params = formulae.Ni   },
-    ['Hyoton: San']  = { mod  = 'INT', mAcc = 0, params = formulae.San  },
-    ['Katon: Ichi']  = { mod  = 'INT', mAcc = 0, params = formulae.Ichi },
-    ['Katon: Ni']    = { mod  = 'INT', mAcc = 0, params = formulae.Ni   },
-    ['Katon: San']   = { mod  = 'INT', mAcc = 0, params = formulae.San  },
-    ['Raiton: Ichi'] = { mod  = 'INT', mAcc = 0, params = formulae.Ichi },
-    ['Raiton: Ni']   = { mod  = 'INT', mAcc = 0, params = formulae.Ni   },
-    ['Raiton: San']  = { mod  = 'INT', mAcc = 0, params = formulae.San  },
-    ['Suiton: Ichi'] = { mod  = 'INT', mAcc = 0, params = formulae.Ichi },
-    ['Suiton: Ni']   = { mod  = 'INT', mAcc = 0, params = formulae.Ni   },
-    ['Suiton: San']  = { mod  = 'INT', mAcc = 0, params = formulae.San  },
+    ['Doton: Ichi']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
+    ['Doton: Ni']    = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
+    ['Doton: San']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
+    ['Huton: Ichi']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
+    ['Huton: Ni']    = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
+    ['Huton: San']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
+    ['Hyoton: Ichi'] = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
+    ['Hyoton: Ni']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
+    ['Hyoton: San']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
+    ['Katon: Ichi']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
+    ['Katon: Ni']    = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
+    ['Katon: San']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
+    ['Raiton: Ichi'] = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
+    ['Raiton: Ni']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
+    ['Raiton: San']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
+    ['Suiton: Ichi'] = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ichi },
+    ['Suiton: Ni']   = { mod  = 'INT', mAcc = 0, params = pieceFuncs.Ni   },
+    ['Suiton: San']  = { mod  = 'INT', mAcc = 0, params = pieceFuncs.San  },
 }
 
 local function clamp(val, min, max)
@@ -75,9 +73,31 @@ local function clamp(val, min, max)
     return val
 end
 
+--- because each Ninjutsu spell seems to have slopes divisible by 0.5 we simply
+--- track a value `s` (or `slopeMod` here) that we multiply by half the xStat.
+--- eg, to get an `m` of 1.5, we set `s` to +1; to get an `m` of 0.5, we set
+--- `s` to -1.
+local function calculatePiece(xStat, slopeMod)
+    return xStat + slopeMod * math.floor(xStat / 2)
+end
+
+--- starting from dINT=0, we work outwards (either positively or negatively)
+--- one piece of the curve at a time.
 local function calculateBaseDmg(caster, params, dStat)
-    local baseDmg = params.v + math.floor(dStat * params.m)
-    return caster.stats.mDMG + clamp(baseDmg, params.dMin, params.dMax)
+    local accum = 0
+    local xStat = math.abs(dStat)
+    local asc = dStat >= 0
+
+    for _, piece in ipairs(asc and params.pos or params.neg) do
+        if xStat > piece.lo then
+            local slopeMod = piece.s
+            local nxStat = math.min(xStat, piece.hi) - piece.lo
+            accum = accum + calculatePiece(nxStat, slopeMod)
+        end
+    end
+
+    local baseDmg = asc and params.base + accum or params.base - accum
+    return baseDmg + caster.stats.mDMG
 end
 
 local function calculateSkillMult(caster, params)
@@ -97,10 +117,9 @@ end
 local function useNinjutsuSpell(caster, target, spell)
     local spellTable          = spells[spell]
     local dStat               = caster.stats[spellTable.mod] - target.stats[spellTable.mod]
-    local params              = spells[spell].params:lookup(dStat)
 
-    local baseDmg             = calculateBaseDmg(caster, params, dStat)
-    local skillMult, skillDiv = calculateSkillMult(caster, params)
+    local baseDmg             = calculateBaseDmg(caster, spellTable.params, dStat)
+    local skillMult, skillDiv = calculateSkillMult(caster, spellTable.params)
     local mabMult, mabDiv     = calculateMabMult(caster, target)
 
     -- work through the multiplications step-by-step to reproduce what is
